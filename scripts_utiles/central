@@ -29,11 +29,7 @@ portSubversionDefaut="3690"
 
 # A MODIFIER ! Définition du répertoire redmine (Ne décommenter que la ligne relative à la version à installer)
 version="/applis/redmine-1.0.0"
-#version="/redmine-1.4.7-2"
-#version="/redmine-2.0.4-0"
-#version="/redmine-2.5.2-3"
-#version="/redmine-2.6.6-0"
-#version="/redmine-3.1.0-0"
+#version="/applis/redmine-3.1.0-0"
 
 # Définition du répertoire racine et du répertoire où seront contenus tous les scripts (pour la fusion et la migration)
 CHEMIN_RACINE=${REPERTOIRE_RACINE}${version}
