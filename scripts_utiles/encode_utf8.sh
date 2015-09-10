@@ -30,8 +30,8 @@ rm ${tmp}
 rm ${dump_orig}
 rm ${dump_utf8}
 
-echo -e "Redémarrage du serveur MySQL...\n"
-./${SCRIPT_CONTROL} restart mysql
+echo -e "Redémarrage des serveurs...\n"
+./${SCRIPT_CONTROL} restart
 
 echo -e "Terminé\n"
 }
