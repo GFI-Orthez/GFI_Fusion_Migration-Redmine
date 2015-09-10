@@ -8,51 +8,51 @@ SET SQL_SAFE_UPDATES = 0;
 -- le min(id) permet de ne garder que les projets d'origine (qui ont un id plus faible car déjà présents dans la base destination)
 UPDATE bitnami_redmine.enumerations source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 -- Mise à jour table Documents
 UPDATE bitnami_redmine.documents source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 -- Mise à jour table Members
 UPDATE bitnami_redmine.members source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 -- Mise à jour table Journals
 UPDATE bitnami_redmine.journals dest
 SET dest.journalized_id=(select min(id) from bitnami_redmine.issues
 where subject=(select subject from bitnami_redmine.issues where id=dest.journalized_id))
 where journalized_id IN
-(select id from niort_redmine.issues where project_id IN (1211, 1212, 1213, 1210, 1214));
+(select id from niort_redmine.issues where project_id IN (1215, 1216, 1217, 1214, 1218));
 
 -- Mise à jour table News
 UPDATE bitnami_redmine.news source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 -- Mise à jour table Wikis
 UPDATE bitnami_redmine.wikis source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 ALTER IGNORE TABLE bitnami_redmine.wikis ADD UNIQUE INDEX wikis_unique (project_id);
 alter table bitnami_redmine.wikis drop index wikis_unique;
 
 -- Mise à jour table Queries
 UPDATE bitnami_redmine.queries source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 -- Mise à jour table Categories
 UPDATE bitnami_redmine.issue_categories source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 -- Mise à jour table Issues
 UPDATE bitnami_redmine.issues source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 -- Cetaines demandes sont présentes dans les projets originaux et dans les projets que l'on veut supprimer. Les demandes en double seront supprimées par la suite
 
 -- Mise à jour table Time_entries
@@ -61,29 +61,29 @@ UPDATE bitnami_redmine.time_entries source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id)),
 source.issue_id=(select min(id) from bitnami_redmine.issues
 where subject=(select subject from bitnami_redmine.issues where id=source.issue_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 -- Mise à jour table Versions
 UPDATE bitnami_redmine.versions source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 -- Mise à jour table Enabled_modules
 UPDATE bitnami_redmine.enabled_modules source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 -- Mise à jour table Projects
 UPDATE bitnami_redmine.custom_fields_projects source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 
 alter table bitnami_redmine.projects_trackers drop index projects_trackers_unique;
 
 -- Mise à jour table Projects_trackers
 UPDATE bitnami_redmine.projects_trackers source
 SET source.project_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.project_id))
-where project_id IN (1211, 1212, 1213, 1210, 1214);
+where project_id IN (1215, 1216, 1217, 1214, 1218);
 ALTER IGNORE TABLE bitnami_redmine.projects_trackers ADD UNIQUE INDEX projects_trackers_unique (project_id, tracker_id);
 
 alter table bitnami_redmine.custom_values drop index custom_values_unique;
@@ -92,21 +92,21 @@ alter table bitnami_redmine.custom_values drop index custom_values_unique;
 UPDATE bitnami_redmine.custom_values dest
 SET dest.customized_id=(select min(id) from bitnami_redmine.issues
 where subject=(select subject from bitnami_redmine.issues where id=dest.customized_id))
-where customized_type='Issue' and customized_id IN (select id from bitnami_redmine.issues where project_id IN (1211, 1212, 1213, 1210, 1214));
+where customized_type='Issue' and customized_id IN (select id from bitnami_redmine.issues where project_id IN (1215, 1216, 1217, 1214, 1218));
 
 UPDATE bitnami_redmine.custom_values source
 SET source.customized_id=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.customized_id))
-where customized_type='Project' and customized_id IN (1211, 1212, 1213, 1210, 1214);
+where customized_type='Project' and customized_id IN (1215, 1216, 1217, 1214, 1218);
 
 ALTER IGNORE TABLE bitnami_redmine.custom_values ADD UNIQUE INDEX custom_values_unique (customized_type, customized_id, custom_field_id);
 
 UPDATE bitnami_redmine.journal_details source
 SET source.old_value=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.old_value))
-where prop_key='project_id' and old_value IN (1211, 1212, 1213, 1210, 1214);
+where prop_key='project_id' and old_value IN (1215, 1216, 1217, 1214, 1218);
 
 UPDATE bitnami_redmine.journal_details source
 SET source.value=(select min(id) from bitnami_redmine.projects where name =(select name from bitnami_redmine.projects where id=source.value))
-where prop_key='project_id' and old_value IN (1211, 1212, 1213, 1210, 1214);
+where prop_key='project_id' and old_value IN (1215, 1216, 1217, 1214, 1218);
 
 -- Phase de suppression
 -- Suppression des issues qui référençaient les projets à supprimer (elles référencent maintenant les bon projets mais sont devenues des doublons)
@@ -114,7 +114,7 @@ where prop_key='project_id' and old_value IN (1211, 1212, 1213, 1210, 1214);
 -- Le max(id) permet de ne selectionner que les issues doublons (elles ont des id plus élevés car elles ont été importées depuis la base source)
 DELETE from bitnami_redmine.issues where id IN (
 select * from (select max(id) from bitnami_redmine.issues
-where subject IN (select subject from niort_redmine.issues where project_id IN (1211, 1212, 1213, 1210, 1214))
+where subject IN (select subject from niort_redmine.issues where project_id IN (1215, 1216, 1217, 1214, 1218))
 group by subject having count(*)>1) as p
 );
 
@@ -123,10 +123,10 @@ group by subject having count(*)>1) as p
 -- Il s'agit de la demande "Formation donnée"
 UPDATE bitnami_redmine.issues dest
 SET dest.project_id = (select min(id) from bitnami_redmine.projects where name=(select name from bitnami_redmine.projects where id=dest.project_id))
-where subject IN (select subject from niort_redmine.issues where project_id IN (1211, 1212, 1213, 1210, 1214));
+where subject IN (select subject from niort_redmine.issues where project_id IN (1215, 1216, 1217, 1214, 1218));
 
 -- On supprime les projets doublons que l'on vient de fusionner
-DELETE from bitnami_redmine.projects where id IN (1211, 1212, 1213, 1210, 1214);
+DELETE from bitnami_redmine.projects where id IN (1215, 1216, 1217, 1214, 1218);
 
 -- On réactive la sécurité
 SET SQL_SAFE_UPDATES = 1;
