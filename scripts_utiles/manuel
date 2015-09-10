@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Effectuer des requêtes SQL afin de déterminer pour chaque table le nombre de lignes que l'on
+# devrait fusionner (calcul théorique) et stocke le tout dans un fichier"
+
+source central
+
+fichier=$1
+script=${SCRIPT_THEORIQUE}
+nbParamsAutorises=1
+baseSource=${BASESOURCE}
+baseDest=${BASEDEST}
+cheminScript=${REPERTOIRE_RACINE}
+cheminJoin=${CHEMIN_JOIN}
+
+requeteUser="select count(*) from "${baseDest}".users;"
+requeteCustomValue="select count(*) from "${baseDest}".custom_values;"
+requeteCustomFieldTracker="select count(*) from "${baseDest}".custom_fields_trackers;"
+requeteGroup="select count(*) from "${baseDest}".groups_users;"
+requeteSchemaMigration="select count(*) from "${baseDest}".schema_migrations;"
+requeteProjectTracker="select count(*) from "${baseDest}".projects_trackers;"
+requeteWikiContentVersion="select count(*) from "${baseDest}".wiki_content_versions;"
+
+aide(){
+    echo -e "\n\n -> Compte le nombre de lignes dans la base destination pour les tables dont les tests ne se font pas automatiquement par le script lancerFusion\n"    
+    echo -e "\n Le premier paramètre est le nom du fichier dans lequel seront stockés les résultats\n"
+}
+
+if [ "$1" == "-h" ]
+then
+    echo -e "\nAide"
+    aide
+    exit 0
+elif [ ${nbParamsAutorises} -ne $# ]
+then
+    echo -e "\n\n Il faut passer "${nbParamsAutorises}" paramètre(s)"
+    echo -e "Exemple : "$0" manuel.txt\n\n"
+    exit 0
+else	
+    ./${script} "CustomValue" "${requeteCustomValue}" "${fichier}"
+    ./${script} "CustomFieldTracker" "${requeteCustomFieldTracker}" "${fichier}"    
+    ./${script} "GroupUsers" "${requeteGroup}" "${fichier}"
+    ./${script} "SchemaMigration" "${requeteSchemaMigration}" "${fichier}"
+    ./${script} "User" "${requeteUser}" "${fichier}" 
+    ./${script} "ProjectTracker" "${requeteProjectTracker}" "${fichier}"
+    ./${script} "WikiContentVersion" "${requeteWikiContentVersion}" "${fichier}"
+    
+	cd ${CHEMIN_RACINE}
+    mv ${fichier} ${cheminJoin}
+fi
+exit 0

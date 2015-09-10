@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Phase de finition
+
+source central
+
+cd ${CHEMIN_PLUGIN}
+rake redmine:data_report RAILS_ENV=production > "${CHEMIN_JOIN}/base_dest_apres.txt"
+cd ${CHEMIN_SCRIPTS}
+./${SCRIPT_MANUEL} manuel_apres.txt
+sed -i -e "1d" "${CHEMIN_JOIN}/base_dest_avant.txt"
+sed -i -e "1d" "${CHEMIN_JOIN}/base_dest_apres.txt"
+./${SCRIPT_JOINTURE} base_dest_avant.txt theorique.txt base_dest_apres.txt final_auto.txt
+./${SCRIPT_JOINTURE} manuel_avant.txt manuel_merge.txt manuel_apres.txt final_manuel.txt
+./${SCRIPT_VERIFICATION} final_manuel.txt final_auto.txt fusion.txt
+echo -e "\n Le fichier fusion.txt a été généré dans le répertoire "${CHEMIN_JOIN}"\n"
+
+exit 0
+

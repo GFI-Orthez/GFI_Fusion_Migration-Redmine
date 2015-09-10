@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Supprime une base de données
+# Cette commande est définitive et l'on ne peut pas l'annuler !
+
+source central
+
+schemaBase=$1
+nbParamsautorises=1
+cheminScript=${CHEMIN_RACINE}
+script_a_lancer=${SCRIPT_A_LANCER}
+passwordRoot=${PASSWORD_ROOT}
+
+aide(){
+	echo -e "\n\n-> Le 1er parametre est le nom de la base à supprimer"
+}
+
+create(){
+	# Fichier temporaire
+	fichierCommande="commande"
+	cd ${cheminScript}
+	echo -e "\nTentative de suppression de la base ${schemaBase} par root\n"
+	# On stocke la commande dans un fichier temporaire
+	echo "mysql -uroot -p${passwordRoot} -e \"drop database if exists ${schemaBase};\";exit;"> ${fichierCommande}
+	# On lance le script avec cette commande
+	./${script_a_lancer} < ${fichierCommande}
+	# On supprime le fichier temporaire
+	rm ${fichierCommande}
+	echo -e "SUCCES ! La base ${schemaBase} a bien été supprimée"
+}
+
+if [ "$1" == "-h" ]
+then
+	echo -e "\nAide"
+	aide
+	exit 0
+elif [ ${nbParamsautorises} -ne $# ]
+then
+	echo -e "\n\n	Il faut passer "${nbParamsautorises}" parametre(s)"
+	echo -e "Exemple :	"$0" schemaBase\n\n"
+	exit 0
+else
+	create
+	exit 0
+fi
+

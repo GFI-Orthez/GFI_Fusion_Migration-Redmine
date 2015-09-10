@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# Exécute une fichier .sql afin de fusionner certaines tables de manière semi-automatique (sans le plugin)
+
+source central
+
+nbParamsautorises=1
+cheminScript=${REPERTOIRE_RACINE}
+script_a_lancer=${SCRIPT_A_LANCER}
+passwordRoot=${PASSWORD_ROOT}
+
+sql=$1
+cheminSQL=${CHEMIN_SQL}
+
+aide(){
+
+    echo -e "\n\n Ce script prend un paramètre : Le nom du fichier.sql dont le contenu sera appliqué à la base destination. Ce fichier sql doit être situé dans le répertoire ${cheminSQL}\n\n"
+}
+
+requetes(){
+	fichierCommande="commande"
+	cd ${CHEMIN_RACINE}
+	# On stocke la commande à exécuter dans un ficheir temporaire
+	echo "mysql -uroot -p${passwordRoot} < ${cheminSQL}\"/\"${sql}"> ${fichierCommande}
+	echo -e "\nL'opération peut durer quelques minutes ...\n"
+	if [ "$sql" = "fusion.sql" ]; then
+		echo -e "\nDurée estimée 4 minutes\n"
+	fi
+	if [ "$sql" = "merge_GCT.sql" ]; then
+		echo -e "\nDurée estimée 5 minutes\n"
+	fi
+	# On lance le script en lui passant la commande que l'on vient de stocker
+	./${script_a_lancer} < ${fichierCommande}
+	# On supprime le fichier temporaire
+	rm ${fichierCommande}
+	echo -e "SUCCES ! Le fichier ${sql} a été importé dans la base destination"
+}
+
+if [ "$1" == "-h" ]
+then
+	echo -e "\nAide"
+	aide
+	exit 0
+elif [ ${nbParamsautorises} -ne $# ]
+then
+	echo -e "\n\n	Il faut passer "${nbParamsautorises}" parametre(s)"
+	echo -e "Exemple :	"$1" fusion.sql\n\n"
+	exit 0
+else
+	requetes
+	exit 0
+fi
+

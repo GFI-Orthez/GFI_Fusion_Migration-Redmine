@@ -1,0 +1,93 @@
+#!/bin/sh
+
+# Définition des variables qui seront par la suite utilisées par les autres scripts
+
+REPERTOIRE_RACINE="/home/redmine"
+
+# Définition du nom du dossier qui contiendra tous les scripts à lancer pour la fusion et la migration (dont celui-ci)
+REPERTOIRE_SCRIPTS="/scripts_utiles"
+
+# A MODIFIER ! Définition de variables à utiliser pour la fusion et la migration
+USER_ROOT="xxxx" # Nom d'utilisateur root de MySQL
+PASSWORD_ROOT="xxxx" # Mot de passe root de MySQL
+USER="xxxx" # Nom d'utilisateur possèdant les droits sur la base (par défaut bitnami)
+PASSWORD_USER="xxxx" # # Mot de passe de l'utilisateur possèdant les droits sur la base
+
+# A MODIFIER ! Ports que l'on souhaite utiliser pour les serveurs
+portApache="8001"
+portMySQL="3301"
+portRedmine1="3101"
+portRedmine2="3102"
+portSubversion="3691"
+
+# Ports par défaut utilisés par les serveurs (Ne pas modifier)
+portApacheDefaut="8080"
+portMySQLDefaut="3306"
+portRedmine1Defaut="3000"
+portRedmine2Defaut="3001"
+portSubversionDefaut="3690"
+
+# A MODIFIER ! Définition du répertoire redmine (Ne décommenter que la ligne relative à la version à installer)
+version="/applis/redmine-1.0.0"
+#version="/redmine-1.4.7-2"
+#version="/redmine-2.0.4-0"
+#version="/redmine-2.5.2-3"
+#version="/redmine-2.6.6-0"
+#version="/redmine-3.1.0-0"
+
+# Définition du répertoire racine et du répertoire où seront contenus tous les scripts (pour la fusion et la migration)
+CHEMIN_RACINE=${REPERTOIRE_RACINE}${version}
+CHEMIN_SCRIPTS=${REPERTOIRE_RACINE}${REPERTOIRE_SCRIPTS}
+
+# Définition du nom des deux bases à fusionner
+BASESOURCE="niort_redmine"
+BASEDEST="bitnami_redmine"
+
+# Définition de variables uniquement propres à la fusion
+REPERTOIRE_REQUETES="/requetes"
+REPERTOIRE_RESULTS="/resultTests"
+REPERTOIRE_BACKUP="/backup"
+CHEMIN_PLUGIN=${REPERTOIRE_RACINE}${version}"/apps/redmine/vendor/plugins"
+CHEMIN_RAKE=${REPERTOIRE_RACINE}${version}"/apps/redmine"
+export CHEMIN_BACKUP=${REPERTOIRE_RACINE}${REPERTOIRE_BACKUP}
+CHEMIN_MODELS=${REPERTOIRE_RACINE}"/applis/redmine-1.0.0/apps/redmine/app/models"
+export CHEMIN_JOIN=${REPERTOIRE_RACINE}${REPERTOIRE_RESULTS}
+export CHEMIN_SQL=${REPERTOIRE_RACINE}${REPERTOIRE_REQUETES}
+CHEMIN_FICHIERS=${REPERTOIRE_RACINE}"/applis/redmine-1.0.0/apps/redmine/files"
+CHEMIN_CONFIG=${REPERTOIRE_RACINE}"/applis/redmine-1.0.0/apps/redmine/config"
+SCRIPT_A_LANCER="use_redmine"
+SCRIPT_CONTROL="ctlscript.sh"
+SCRIPT_SEMI_AUTO="semi_auto"
+SCRIPT_DROP_DATABASE="dropDatabase"
+SCRIPT_CALCUL="lancerCalcul"
+SCRIPT_RECTIFICATIONS="rectifications"
+SCRIPT_CREATE_DATABASE="createDatabase"
+SCRIPT_EDIT_DATABASE="editDatabaseYML"
+SCRIPT_SAVE_RESTORE="save_restore" 
+SCRIPT_COMMENTER="commenter"
+SCRIPT_THEORIQUE="RTheorique"
+SCRIPT_MANUEL="manuel"
+SCRIPT_JOINTURE="jointure"
+SCRIPT_VERIFICATION="verification"
+
+NOM_FICHIER="database.yml"
+FICHIER_CONFIGURATION="configuration.yml"
+FICHIER_MAIL="email.yml"
+FICHIER_TEST_MANUEL="manuel.txt"
+
+# Nom des modèles dont certaines lignes sont à commenter pour ne pas faire échouer la fusion (effectué par le script "commenter")
+VERSION="version.rb"
+TIME_ENTRY="time_entry.rb"
+PROJECT="project.rb"
+MODULE="enabled_module.rb"
+
+# Nom des fichiers qui définissent les ports à ouvrir pour chaque serveur
+fichierApache="httpd.conf" 
+fichierRedmine="httpd-app.conf" # Certaines versions utilisent un fichier appelé "redmine.conf"
+fichierSubversion="ctl.sh"
+fichierMySQL1="my.cnf"
+fichierMySQL2="ctl.sh"
+fichierBitnami="bitnami.conf"
+
+
+

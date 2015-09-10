@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Phase d'initialisation de l'environnement de travail
+
+./central
+source central
+./${SCRIPT_EDIT_DATABASE} ${BASESOURCE}
+./${SCRIPT_COMMENTER} -c
+. ${CHEMIN_RACINE}"/"${SCRIPT_A_LANCER}
+
+exit 0
+

@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Permet d'effectuer une fusion entre trois fichiers en une seule commande
+source central
+
+fichier1=$1
+fichier2=$2
+fichier3=$3
+fichierDest=$4
+script=${SCRIPT_THEORIQUE}
+nbParamsAutorises=4
+cheminJoin=${CHEMIN_JOIN}
+
+aide(){
+	echo -e "\n\n Permet d'effectuer une fusion entre trois fichiers en une seule commande\n"  
+    echo -e "\n\n -> Le premier paramètre est le nom du premier fichier\n"    
+	echo -e "-> Le deuxième paramètre est le nom du deuxième fichier à joindre\n"
+	echo -e "-> Le troisième paramètre est le nom du dernier fichier à joindre\n"
+	echo -e "-> Le quatrième paramètre est le nom du fichier dans lequel sera stocké le résultat de la jointure des trois fichiers précédents\n"
+}
+
+if [ "$1" == "-h" ]
+then
+    echo -e "\nAide"
+    aide
+    exit 0
+elif [ ${nbParamsAutorises} -ne $# ]
+then
+    echo -e "\n\n Il faut passer "${nbParamsAutorises}" paramètre(s)"
+    echo -e "Exemple : "$0" fichier1.txt fichier2.txt fichier3.txt final.txt\n\n"
+    exit 0
+else
+	echo -e " Jointure des fichiers "${fichier1}", "${fichier2}", "${fichier3}"\n"
+    
+	join "${CHEMIN_JOIN}/${fichier1}" "${CHEMIN_JOIN}/${fichier2}" > "${CHEMIN_JOIN}/tmp"
+	join "${CHEMIN_JOIN}/tmp" "${CHEMIN_JOIN}/${fichier3}" > "${CHEMIN_JOIN}/${fichierDest}"
+    rm "${CHEMIN_JOIN}/tmp"
+	#rm "${CHEMIN_JOIN}/${fichier1}"
+	#rm "${CHEMIN_JOIN}/${fichier2}"
+	#rm "${CHEMIN_JOIN}/${fichier3}"
+fi
+exit 0

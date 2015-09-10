@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# Permet de commenter/décommenter certaines lignes dans les modèles Ruby des tables
+# Ceci afin de supprimer temporairement des contraintes qui lèveraient une exception pendant la fusion
+# Dans tous les cas, les lignes commentées avant la fusion doivent être décommentées après
+
+source central
+
+nbParamsautorises=0
+
+cheminFichier=${CHEMIN_MODELS}
+version=${VERSION}
+time_entry=${TIME_ENTRY}
+project=${PROJECT}
+module=${MODULE}
+
+aide(){
+    echo -e "\n\n -> Ce script permet de commenter/décommenter les lignes dans les modèles qui définissent certaines contraintes empehcant la fusion\n"
+    echo -e "On commente avec l'option -c et on décommente avec l'option -d\n"
+}
+
+
+commenter(){
+    # Commenter certaines lignes qui définissent une contrainte afin d'opérer la fusion
+    sed -i -e '30s/.*/#validates_uniqueness_of :name, :scope => [:project_id]/g' ${version}
+    sed -i -e '38s/.*/#validates_presence_of :user_id, :activity_id, :project_id, :hours, :spent_on #, gct_tpscra/g' ${time_entry}
+    sed -i -e '42s/.*/#@@valid_units = [\"A\", \"M\", \"S\", \"J\"]/g' ${time_entry}
+    sed -i -e '43s/.*/#validates_inclusion_of :gct_tpscra, :in=>@@valid_units, :message=> :inclusion/g' ${time_entry}
+    sed -i -e '67s/.*/#validates_uniqueness_of :name, :identifier/g' ${project}
+    sed -i -e '22s/.*/#validates_uniqueness_of :name, :scope => :project_id/g' ${module}
+}
+
+decommenter(){
+    # Décommenter certaines lignes après la fusion afin de remettre en place certaines contraintes qui empechaient la fusion
+    sed -i -e '30s/.*/validates_uniqueness_of :name, :scope => [:project_id]/g' ${version}
+    sed -i -e '38s/.*/validates_presence_of :user_id, :activity_id, :project_id, :hours, :spent_on , :gct_tpscra/g' ${time_entry}	
+    sed -i -e '42s/.*/@@valid_units = [\"A\", \"M\", \"S\", \"J\"]/g' ${time_entry}
+    sed -i -e '43s/.*/validates_inclusion_of :gct_tpscra, :in=>@@valid_units, :message=> :inclusion/g' ${time_entry}
+    sed -i -e '67s/.*/validates_uniqueness_of :name, :identifier/g' ${project}	
+    sed -i -e '22s/.*/validates_uniqueness_of :name, :scope => :project_id/g' ${module}
+}
+
+cd ${cheminFichier}
+if [ "$1" == "-h" ]
+then
+	aide
+	exit 0
+elif [ "$1" == "-d" ]
+then
+	decommenter
+	exit 0	
+elif [ "$1" == "-c" ]
+then
+	commenter
+	exit 0
+elif [ ${nbParamsautorises} -ne $#]
+then
+	echo -e "\nAide:		"$0" -h\n"
+	echo -e "Exemple pour commenter:		"$0" -c\n"
+	echo -e "Exemple pour décommenter:		"$0" -d\n"
+	exit 0
+fi
+

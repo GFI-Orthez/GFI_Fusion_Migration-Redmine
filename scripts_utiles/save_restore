@@ -1,0 +1,98 @@
+#!/bin/sh
+
+# Permet la sauvegarde et/ou la restauration d'une base de données
+
+source central
+
+typeAction=$1
+nomUser=$2
+schemaBase=$3
+nbParamsautorises=3
+cheminScript=${CHEMIN_RACINE}
+repertoireBackup=${CHEMIN_BACKUP}
+script_a_lancer=${SCRIPT_A_LANCER}
+current_time=$(date "+%Y%m%d_%H%M")
+nomFichierSortie=${schemaBase}"-"${current_time}".sql"
+encodage="utf8"
+
+passwordUser=${PASSWORD_USER}
+passwordRoot=${PASSWORD_ROOT}
+
+aide(){
+	echo -e "\n\n -> Le 1er parametre est le type d'action : -s pour sauvegarder ou -r pour restaurer la dernière sauvegarde du système"
+	echo -e "\n-> Le 2eme parametre est le nom d'utilisateur mysql que l'on souhaite conecter"
+	echo -e " -> Le 3eme parametre est le om du schema de la base que l'on souhaite sauvegarder/restaurer\n"
+	echo -e " ->Attention, il faut que le serveur MySQL soit en marche\n\n"
+}
+
+save(){
+	#Sauvegarde
+	cd ${cheminScript}
+	echo -e "Mot de passe de l'utilisateur "${nomUser}" requis(cette étape peut être longue...)\n"
+	# On stocke la commande à exécuter dans un fichier temporaire
+	echo "mysqldump --routines -u ${nomUser} -p${passwordUser} ${schemaBase} > ${repertoireBackup}/${nomFichierSortie}" > tester
+	# On lance le script en lui passant la commande que l'on vient de stocker
+	./${script_a_lancer} < tester
+	# On supprime le fichier temporaire
+	rm tester
+	echo -e "SUCCES !Le fichier de sauvegarde a été généré dans le répertoire ${repertoireBackup}\n"
+}
+
+restore(){
+	# Définition des fichiers temporaires qui seront utilisés
+	fichierSQL_reconstruction="RecontructionBaseVide.sql"
+	fichierCommande="commande"
+	fichierImportationDonnees="import"
+	#Restauration de la dernière sauvegarde
+	cd ${cheminScript}
+	echo -e "\nTentative de construction d'un nouvelle table vide accessible par ${nomUser}\n"
+	# On stocke la commande SQL qui permet de réinitialiser la base
+	echo "drop database if exists ${schemaBase}; create database ${schemaBase} default character set ${encodage}; grant all on ${schemaBase}.* to '${nomUser}'@'localhost'; flush privileges;" >  "${fichierSQL_reconstruction}"
+	# On stocke la commande à exécuter dans un fichier temporaire
+	echo "mysql -uroot -p${passwordRoot} < ${fichierSQL_reconstruction};exit;" > ${fichierCommande}
+	# On lance le script en lui passant la commande que l'on vient de stocker
+	./${script_a_lancer} < ${fichierCommande}
+	# On supprime les fichiers temporaires
+	rm ${fichierCommande}
+	rm ${fichierSQL_reconstruction}
+	#Importation des données
+	cd ${repertoireBackup}
+	# On récupère le fichier le plus récent dont le nom commence par le nom de la base passée en paramètre
+	lastFile=`ls -t ${schemaBase}* | head -1`
+	echo -e "\nFichier a importer (le plus récent): "${lastFile}"\n"
+	echo -e "Importation des données (cette étape peut être longue...)\n"
+	# On stocke la commande à exécuter dans un fichier temporaire
+	echo "mysql -u ${nomUser} -p${passwordUser} --default-character-set=utf8 ${schemaBase}< ${lastFile};exit;" > ${fichierImportationDonnees}
+	# On lance le script en lui passant la commande que l'on vient de stocker
+	${cheminScript}/${script_a_lancer} < ${fichierImportationDonnees}
+	# On supprime le dernier fichier temporaire
+	rm ${fichierImportationDonnees}
+	echo -e "SUCCES ! Importation des données dans la nouvelle base"
+	
+}
+
+if [ "${typeAction}" == "-h" ]
+then
+	echo -e "\nAide"
+	aide
+elif [ ${nbParamsautorises} -ne $# ]
+then
+	echo -e "\n\n	Il faut passer "${nbParamsautorises}" parametres"
+	echo -e "Exemple :	"$0" -s nomUser schemaBase\n\n"
+elif [ "${typeAction}" == "-s" ]
+then
+	echo -e "\nSauvegarde"
+	save
+elif [ "${typeAction}" == "-r" ]
+then
+	echo -e "\nRestauration"
+	restore
+else
+	echo -e "\nPas de parametres"
+	echo -e "\nIl faut passer "${nbParamsautorises}" parametres"
+	echo -e "Exemple : \""$0" -s nomUser schemaBase\""
+	aide
+fi
+
+exit 0
+

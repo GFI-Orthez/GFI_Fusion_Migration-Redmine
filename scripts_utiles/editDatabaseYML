@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Modifie le fichier database.yml afin d'y ajouter quelques lignes indispensables à la fusion
+
+source central
+
+nomUser=${USER}
+password=${PASSWORD_USER}
+schemaBase=$1
+nbParamsautorises=1
+nomFichier=${NOM_FICHIER}
+cheminFichier=${CHEMIN_CONFIG}
+
+aide(){
+	echo -e " -> Le 1er parametre est le nom du schema de la base que l'on souhaite fusionner (base source)\n\n"
+}
+
+modification(){
+	#Modification du fichier database.yml
+	cd ${cheminFichier}
+	# On cherche si les modifications sont ont déjà été réalisées
+	grep ${schemaBase} ${nomFichier}
+	retval=$?
+	# Si non :
+	if [ "${retval}" != 0 ]
+	then echo -e "Modification du fichier "${nomFichier}" en cours..."
+	# On fait une copie au cas où...
+	cp ${nomFichier} ${nomFichier}"_save"
+	# On rajoute les lignes manquantes
+	echo -e "source_redmine:\n  adapter: mysql\n  host: localhost\n  username: ${nomUser} \n  password: ${password}\n  database: ${schemaBase}\n  socket: /home/redmine/applis/redmine-1.0.0/mysql/tmp/mysql.sock\n" >> ${nomFichier}
+	fi
+	echo -e "Le fichier est à jour !\n"
+}
+
+if [ "${nomUser}" == "-h" ]
+then
+	echo -e "\nAide"
+	aide
+	exit 0
+elif [ ${nbParamsautorises} -eq $# ]
+then
+	modification
+	exit 0
+else
+	echo -e "\nPas de parametres"
+	echo -e "\nIl faut passer "${nbParamsautorises}" parametres"
+	echo -e "Exemple : \""$0" schemaBase\""
+	aide
+	exit 0
+fi
+

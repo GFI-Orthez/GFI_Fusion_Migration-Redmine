@@ -1,0 +1,174 @@
+#!/bin/sh
+
+# Effectuer des requêtes SQL afin de déterminer pour chaque table le nombre de lignes que l'on
+# devrait fusionner (calcul théorique) et stocke le tout dans un fichier"
+
+source central
+
+fichier=$1
+script=${SCRIPT_THEORIQUE}
+nbParamsAutorises=1
+baseSource=${BASESOURCE}
+baseDest=${BASEDEST}
+cheminScript=${REPERTOIRE_RACINE}
+cheminJoin=${CHEMIN_JOIN}
+
+fichiermanuel="manuel_merge.txt"
+
+
+# Il y a une requête associée à chaque table qui permet de déterminer le nombre de lignes qui sont à fusionner (Calcul théorique)
+requeteUser="SET @nb=(select count(*) from "${baseSource}".users);
+select @nb-count(*) from "${baseSource}".users source, "${baseDest}".users dest
+where (dest.login=source.login and source.type='User' and dest.type='User') or (source.type='AnonymousUser' and dest.type='AnonymousUser')"
+requeteCustomField="SET @nb=(SELECT count(*) from "${baseSource}".custom_fields);
+Select @nb-count(*) FROM "${baseSource}".custom_fields source, "${baseDest}".custom_fields dest where source.name=dest.name and source.type=dest.type;"
+requeteTracker="SELECT count(*) FROM "${baseSource}".trackers source
+where source.name NOT IN (SELECT name FROM "${baseDest}".trackers);"
+requeteIssueStatus="SELECT count(*) FROM "${baseSource}".issue_statuses source
+where source.name NOT IN (SELECT name FROM "${baseDest}".issue_statuses);"
+requeteEnumeration="SELECT count(*) FROM "${baseSource}".enumerations source
+where source.name NOT IN (SELECT name FROM "${baseDest}".enumerations);"
+requeteComment="SELECT count(*) FROM "${baseSource}".comments;"
+requeteGroupUser="SELECT count(*) FROM "${baseSource}".groups_users;"
+requeteToken="select count(*) from "${baseSource}".tokens;"
+requeteUserPreference="SELECT count(*) FROM "${baseSource}".user_preferences source where
+source.user_id NOT IN (select id from "${baseSource}".users where login IN (select login from "${baseDest}".users));"
+requeteWatcher="SET @nb=(SELECT count(*) from "${baseSource}".watchers);
+SELECT @nb-count(*) FROM "${baseSource}".watchers source, "${baseDest}".watchers dest where 
+source.watchable_type=dest.watchable_type and source.watchable_id=dest.watchable_id and
+source.user_id=(select id from "${baseSource}".users where login = (select login from "${baseDest}".users where id=dest. user_id));"
+requeteSetting="select count(*) from "${baseSource}".settings s where s.id NOT IN(
+SELECT source.id from "${baseSource}".settings source, "${baseDest}".settings dest where source.name=dest.name);"
+requeteSchemaMigration="SELECT count(*) FROM "${baseSource}".schema_migrations source
+where source.version NOT IN (SELECT version FROM "${baseDest}".schema_migrations);"
+requeteRole="SELECT count(*) FROM "${baseSource}".roles source where
+source.name NOT IN(select name from "${baseDest}".roles);"
+requeteProject="SELECT count(*) FROM "${baseSource}".projects source
+where source.name NOT IN (SELECT name FROM "${baseDest}".projects) OR
+source.identifier NOT IN (SELECT identifier FROM "${baseDest}".projects);"
+requeteProjectTracker="SET @nb=(select count(*) from "${baseSource}".projects_trackers);
+SELECT @nb-count(*) FROM "${baseSource}".projects_trackers source, "${baseDest}".projects_trackers dest where
+source.project_id= 
+(select n.id from "${baseSource}".projects n 
+where n.identifier= (select identifier from "${baseDest}".projects where id=dest.project_id) and
+n.name= (select name from "${baseDest}".projects where id=dest.project_id))
+and source.tracker_id = (select id from "${baseSource}".trackers where name=(select name from "${baseDest}".trackers where id=dest.tracker_id));"
+requeteMember="select count(*) from "${baseSource}".members;"
+requeteMemberRole="SELECT count(*) FROM "${baseSource}".member_roles;"
+requeteQuerie="SET @nb=(select count(*) from "${baseSource}".queries);
+select @nb-count(*) from "${baseSource}".queries source, "${baseDest}".queries dest
+where source.name=dest.name and source.user_id=(select id from "${baseSource}".users where login = (select login from "${baseDest}".users where id=dest.user_id))
+and source.project_id= 
+(select n.id from "${baseSource}".projects n 
+where n.identifier= (select identifier from "${baseDest}".projects where id=dest.id) and
+n.name= (select name from "${baseDest}".projects where id=dest.project_id));"
+requeteEnabledModule="SET @nb=(SELECT count(*) from "${baseSource}".enabled_modules);
+SELECT @nb-count(*) FROM "${baseSource}".enabled_modules source, "${baseDest}".enabled_modules dest
+where source.name=dest.name and 
+source.project_id = 
+(select n.id from "${baseSource}".projects n 
+where n.identifier= (select identifier from "${baseDest}".projects where id=dest.project_id) and
+n.name= (select name from "${baseDest}".projects where id=dest.project_id));"
+requeteVersion="SELECT count(*) FROM "${baseSource}".versions"
+requeteNews="SET @nb=(SELECT count(*) FROM "${baseSource}".news);
+SELECT @nb-count(*) FROM "${baseSource}".news source, "${baseDest}".news dest
+where source.title=dest.title and source.summary=dest.summary and source.project_id = 
+(select n.id from "${baseSource}".projects n 
+where n.identifier= (select identifier from "${baseDest}".projects where id=dest.id) and
+n.name= (select name from "${baseDest}".projects where id=dest.id));"
+requeteIssueCategory="SET @nb = (select count(*) from "${baseSource}".issue_categories);
+SELECT @nb-count(*) FROM "${baseSource}".issue_categories source, "${baseDest}".issue_categories dest where source.name=dest.name and
+source.project_id=(select id from "${baseSource}".projects where id=(select id from "${baseDest}".projects where id=dest.project_id)) and
+source.assigned_to_id=(select id from "${baseSource}".users where id=(select id from "${baseDest}".users where id=dest.assigned_to_id));"
+requeteIssue="SELECT count(*) FROM "${baseSource}".issues;"
+requeteCustomValue="SET @nbIss=(select count(*) from "${baseSource}".custom_values where customized_type='Issue');
+SET @nbUse=(select count(*) from "${baseSource}".custom_values where customized_type='Principal'
+and customized_id NOT IN (select id from "${baseSource}".users where login IN (select login from "${baseDest}".users) and type='User'));
+SET @nbPro=(select 3*count(*) from "${baseSource}".projects);
+select @nbIss + @nbUse + @nbPro;"
+# Pour les custom_values de type Projet, les 3 custom_values (1 par tracker) sont créés s'il ne sont pas déjà présents lors de la fusion des Projets par le plugin.
+# On se retrouve avec plus de custom_values de type Projet dans la base fusionnée que de custom_values présents dans les deux bases avant la fusion (4433 contre 2505 et 1917)
+requeteJournal="SELECT count(*) FROM "${baseSource}".journals;"
+requeteJournalDetail="SELECT count(*) FROM "${baseSource}".journal_details;"
+requeteTimeEntry="SELECT count(*) FROM "${baseSource}".time_entries;"
+requeteDocument="select count(*) from "${baseSource}".documents"
+requeteWiki="SET @nb=(select count(*) from "${baseSource}".wikis);
+SELECT @nb-count(*) FROM "${baseSource}".wikis source, "${baseDest}".wikis dest where
+source.project_id= 
+(select n.id from "${baseSource}".projects n 
+where n.identifier= (select identifier from "${baseDest}".projects where id=dest.project_id) and
+n.name= (select name from "${baseDest}".projects where id=dest.project_id));"
+requeteWikiPage="select count(*) from "${baseSource}".wiki_pages"
+requeteWikiContent="select count(*) from "${baseSource}".wiki_contents"
+requeteWikiContentVersion="select count(*) from "${baseSource}".wiki_content_versions"
+requeteAttachment="SET @nb=(select count(*) from "${baseSource}".attachments);
+SELECT count(*) FROM "${baseSource}".attachments;"
+requeteWorkflow="select count(*) from "${baseSource}".workflows;"
+requeteCustomFieldTracker="SET @nb=(select count(*) from "${baseSource}".custom_fields_trackers);
+SELECT @nb-count(*) FROM "${baseSource}".custom_fields_trackers source, "${baseDest}".custom_fields_trackers dest where
+source.custom_field_id = (select id from "${baseSource}".trackers where name=(select name from "${baseDest}".trackers where id=dest.custom_field_id))
+and source.tracker_id = (select id from "${baseSource}".trackers where name=(select name from "${baseDest}".trackers where id=dest.tracker_id));"
+
+aide(){
+    echo -e "\n\n -> Le premier paramètre est le nom d'un fichier dans lequel les résultats de l'exécution seront stockés\n"    
+}
+
+if [ "$1" == "-h" ]
+then
+    echo -e "\nAide"
+    aide
+    exit 0
+elif [ ${nbParamsAutorises} -ne $# ]
+then
+    echo -e "\n\n Il faut passer "${nbParamsAutorises}" paramètre(s)"
+    echo -e "Exemple : "$0" fichier.txt\n\n"
+    exit 0
+else
+	#cd ${CHEMIN_RACINE}
+    #echo "(in ${CHEMIN_SCRIPTS}/apps/redmine)" > ${fichier}
+	cd ${CHEMIN_SCRIPTS}
+    ./${script} "CustomField" "${requeteCustomField}" "${fichier}"
+    ./${script} "Tracker" "${requeteTracker}" "${fichier}"
+    ./${script} "IssueStatus" "${requeteIssueStatus}" "${fichier}"
+    ./${script} "Enumeration" "${requeteEnumeration}" "${fichier}"
+    ./${script} "Comment" "${requeteComment}" "${fichier}"
+    ./${script} "Token" "${requeteToken}" "${fichier}"
+    ./${script} "UserPreference" "${requeteUserPreference}" "${fichier}"
+    ./${script} "Watcher" "${requeteWatcher}" "${fichier}"
+    ./${script} "Setting" "${requeteSetting}" "${fichier}"
+    ./${script} "Role" "${requeteRole}" "${fichier}"
+    ./${script} "Project" "${requeteProject}" "${fichier}"
+    ./${script} "EnabledModule" "${requeteEnabledModule}" "${fichier}"
+    ./${script} "Member" "${requeteMember}" "${fichier}"
+    ./${script} "MemberRole" "${requeteMemberRole}" "${fichier}"
+    ./${script} "Query" "${requeteQuerie}" "${fichier}"
+    ./${script} "Version" "${requeteVersion}" "${fichier}"
+    ./${script} "News" "${requeteNews}" "${fichier}"
+    ./${script} "IssueCategory" "${requeteIssueCategory}" "${fichier}"
+    ./${script} "Issue" "${requeteIssue}" "${fichier}"
+    ./${script} "Journal" "${requeteJournal}" "${fichier}"
+    ./${script} "JournalDetail" "${requeteJournalDetail}" "${fichier}"
+    ./${script} "TimeEntry" "${requeteTimeEntry}" "${fichier}"
+    ./${script} "Document" "${requeteDocument}" "${fichier}"
+    ./${script} "Wiki" "${requeteWiki}" "${fichier}"
+    ./${script} "WikiPage" "${requeteWikiPage}" "${fichier}"
+    ./${script} "WikiContent" "${requeteWikiContent}" "${fichier}"
+    ./${script} "Attachment" "${requeteAttachment}" "${fichier}"
+    ./${script} "Workflow" "${requeteWorkflow}" "${fichier}"
+
+    ./${script} "CustomValue" "${requeteCustomValue}" "${fichiermanuel}"
+    ./${script} "CustomFieldTracker" "${requeteCustomFieldTracker}" "${fichiermanuel}"    
+    ./${script} "GroupUsers" "${requeteGroupUser}" "${fichiermanuel}"
+    ./${script} "SchemaMigration" "${requeteSchemaMigration}" "${fichiermanuel}"
+    ./${script} "User" "${requeteUser}" "${fichiermanuel}" 
+    ./${script} "ProjectTracker" "${requeteProjectTracker}" "${fichiermanuel}"
+    ./${script} "WikiContentVersion" "${requeteWikiContentVersion}" "${fichiermanuel}"
+    
+    cd ${CHEMIN_RACINE}
+    mv ${fichier} ${cheminJoin}
+
+    mv ${fichiermanuel} ${cheminJoin}
+
+
+fi
+exit 0

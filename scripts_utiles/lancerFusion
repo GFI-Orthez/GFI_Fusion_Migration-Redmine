@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Phase de fusion, à lancer après avoir lancé le use_redmine
+
+source central
+
+./${SCRIPT_CALCUL} theorique.txt
+./${SCRIPT_MANUEL} manuel_avant.txt
+cd ${CHEMIN_RAKE}
+rake db:migrate_plugins RAILS_ENV=production
+rake redmine:data_report RAILS_ENV=production > ${CHEMIN_JOIN}"/base_dest_avant.txt"
+rake redmine:merge_redmine RAILS_ENV=production
+cd ${CHEMIN_SCRIPTS}
+./${SCRIPT_SEMI_AUTO} fusion.sql
+
+exit 0
+

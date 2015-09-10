@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Exécution requete de test : Ecrit dans le fichier le nom de chaque table
+# suivi d'une valeur correspondant au nombre de lignes devant théoriquement être fusionnées
+# Permet par la suite de comprarer les valeurs obtenues avec les résultats théoriques
+
+source central
+
+table=$1
+requete=$2
+
+baseSource=${BASESOURCE}
+baseDest=${BASEDEST}
+
+nbParamsautorises=3
+script_a_lancer=${SCRIPT_A_LANCER}
+passwordRoot=${PASSWORD_ROOT}
+
+fichier=$3
+
+aide(){
+    echo -e "Ce script permet de calculer le nombre de lignes à fusionner en théorie (à comparer avec la pratique)\n"
+    echo -e "Normalement, ce script est lancé depuis le script 'lancerCalcul'\n"
+    echo -e "Le premier paramètre est le nom de la table sur laquelle le test s'effectuera\n"
+    echo -e "Le deuxième paramètre est la requête a exécuter sur cette table\n"
+    echo -e "Le troisième paramètre est le nom d'un fichier dans lequel le résultat de la requête sera stocké\n"
+}
+
+
+
+create(){
+	fichierCommande="commande"
+	echo -e "\nResultats Théoriques pour la table ${table}\n"
+	# On stocke la commande à lancer dans un fichier temporaire
+	cd ${CHEMIN_RACINE}
+	echo "mysql -uroot -p${passwordRoot} -e \"${requete}\";exit;" > ${fichierCommande}
+	# On lance le script avec cette commande en entrée et on stocke le résultat dans un autre fichier
+	./${script_a_lancer} < ${fichierCommande} > result
+	# On récupère la deuxième ligne du fichier (le nombre). La première étant le titre : "count(*)"
+	tmp=$(sed -n '2p' result)
+	# On ajoute le nom de la table et le nombre de lignes trouvées au fichier final
+	echo -e "${table}: ${tmp}" >> ${fichier}
+	# On supprime les fichiers temporaires ayant permis cette manipulation
+	rm ${fichierCommande}
+	rm result
+}
+
+if [ "$1" == "-h" ]
+then
+	echo -e "\nAide"
+	aide
+	exit 0
+elif [ ${nbParamsautorises} -ne $# ]
+then
+	echo -e "\n\n	Il faut passer "${nbParamsautorises}" parametre(s)"
+	echo -e "Exemple :	"$0" table requete fichier.txt\n\n"
+	exit 0
+else
+	create
+	exit 0
+fi
+

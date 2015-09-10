@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Permet d'effectuer une fusion entre trois fichiers en une seule commande
+source central
+
+fichier1=$1
+fichier2=$2
+fichierDest=$3
+script=${SCRIPT_THEORIQUE}
+nbParamsAutorises=3
+cheminJoin=${CHEMIN_JOIN}
+
+aide(){
+	echo -e "\n\n Permet de vérifier si les résultats théoriques et expérimentaux sont identiques. Les deux fichiers de report sont ensuite fusionnés dans le fichier passé en dernier paramètre\n"  
+    echo -e "\n\n -> Les deux premiers paramètres sont les nom des deux fichier de report générés précedemment\n"
+	echo -e "\n\n -> Le troisième paramètre est le nom du fichier dans lequel sera stocké le résultat de la jointure des deux fichiers de report\n"
+}
+
+if [ "$1" == "-h" ]
+then
+    echo -e "\nAide"
+    aide
+    exit 0
+elif [ ${nbParamsAutorises} -ne $# ]
+then
+    echo -e "\n\n Il faut passer "${nbParamsAutorises}" paramètre(s)"
+    echo -e "Exemple : "$0" final_manuel.txt final_auto.txt final.txt\n\n"
+    exit 0
+else
+	echo -e " Vérification des résultats\n"
+    
+	awk -f verif.awk ${CHEMIN_JOIN}"/"${fichier1} > ${CHEMIN_JOIN}"/"tmp1
+	awk -f verif.awk ${CHEMIN_JOIN}"/"${fichier2} > ${CHEMIN_JOIN}"/"tmp2
+	
+	join ${CHEMIN_JOIN}"/"${fichier1} ${CHEMIN_JOIN}"/"tmp1 > ${CHEMIN_JOIN}"/"tmp3
+	join ${CHEMIN_JOIN}"/"${fichier2} ${CHEMIN_JOIN}"/"tmp2 > ${CHEMIN_JOIN}"/"tmp4
+	
+	cd ${CHEMIN_JOIN}
+	rm tmp1
+	rm tmp2
+	cat tmp3 tmp4 > ${fichierDest}
+	rm tmp3
+	rm tmp4
+	
+fi
+exit 0
